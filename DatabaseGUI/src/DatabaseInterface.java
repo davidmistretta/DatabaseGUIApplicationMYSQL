@@ -14,6 +14,8 @@ public class DatabaseInterface extends JFrame
 	private JTextField dbURLTextField, dbUserTextField;
 	private JPasswordField dbPWTextField;
 	private JButton connectButton;
+	private JCheckBox checkBox;
+	private JProgressBar connectionProgressBar; //declare connection progress bar
 	private final int WINDOW_WIDTH = 500;
 	private final int WINDOW_HEIGHT = 250;
 	
@@ -28,48 +30,63 @@ public class DatabaseInterface extends JFrame
 		 * build Panel is a private void method
 		 */
 		buildPanel();
+		//adds panel that was built into JFrame
 		add(panel);
 		setVisible(true);
 	}
 	private void buildPanel()
 	{
 		/*
-		 * Display Box for user to input Database URL
+		 * Display Box for user to input Database URL and format
 		 */
 		dbURLLabel = new JLabel("Database URL");
 		dbURLLabel.setAlignmentX(CENTER_ALIGNMENT);
 		dbURLTextField =  new JTextField(24);
 		dbURLTextField.setAlignmentX(CENTER_ALIGNMENT);
 		dbURLTextField.setHorizontalAlignment(JTextField.CENTER);
-		
+		dbURLTextField.setMaximumSize(dbURLTextField.getPreferredSize());
+
 		/*
-		 * Display Box for user to input username for database
+		 * Display Box for user to input username for database and format
 		 */
 		dbUserLabel = new JLabel("Username");
 		dbUserLabel.setAlignmentX(CENTER_ALIGNMENT);
 		dbUserTextField = new JTextField(24);
 		dbUserTextField.setAlignmentX(CENTER_ALIGNMENT);
 		dbUserTextField.setHorizontalAlignment(JTextField.CENTER);
+		dbUserTextField.setMaximumSize(dbUserTextField.getPreferredSize());
 		
 		/*
-		 * Display box for user to input password for database
+		 * Display box for user to input password for database and format
 		 */
 		dbPWLabel = new JLabel("Password");
 		dbPWLabel.setAlignmentX(CENTER_ALIGNMENT);
 		dbPWTextField = new JPasswordField(24);
 		dbPWTextField.setAlignmentX(CENTER_ALIGNMENT);
-		dbPWTextField.setHorizontalAlignment(JTextField.CENTER);
-		
+		dbPWTextField.setHorizontalAlignment(JTextField.CENTER);	
+		dbPWTextField.setMaximumSize(dbPWTextField.getPreferredSize());
+		dbPWTextField.setEchoChar('*');
+		/*
+		 * Button that initiates connection to database
+		 */
 		connectButton = new JButton("Connect");
 		connectButton.setAlignmentX(CENTER_ALIGNMENT);
 		connectButton.addActionListener(new ConnectButtonListener());
-		dbURLTextField.setMaximumSize(dbURLTextField.getPreferredSize());
-		
-		dbUserTextField.setMaximumSize(dbUserTextField.getPreferredSize());
-		
-		dbPWTextField.setMaximumSize(dbPWTextField.getPreferredSize());
-		
-		
+		/*
+		 * Progress Bar for data connections
+		 * Will be linked to ConnectButtonListener and will show progress as connection is taking place
+		 */
+		connectionProgressBar = new JProgressBar(0, 100);
+		connectionProgressBar.setMaximumSize(dbPWTextField.getPreferredSize());
+		/*
+		 * Checkbox for password
+		 */
+		checkBox = new JCheckBox("view password");
+		checkBox.setAlignmentX(CENTER_ALIGNMENT);
+		checkBox.addActionListener(new CheckBoxPWViewListener());
+		/*
+		 * Add labels, textfields,  buttons, and checkbox to panel
+		 */
 		panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel,BoxLayout.Y_AXIS));
 		panel.add(dbURLLabel);
@@ -80,30 +97,63 @@ public class DatabaseInterface extends JFrame
 		
 		panel.add(dbPWLabel);
 		panel.add(dbPWTextField);
+		panel.add(checkBox);
 		panel.add(connectButton);
+		panel.add(connectionProgressBar);
 		
 	}
 	/*
+	 * private inner class that handles the event
+	 * when the check button is clicked
+	 */
+	private class CheckBoxPWViewListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent ex)
+		{
+			if(checkBox.isSelected())
+				dbPWTextField.setEchoChar((char)0);
+			else
+				dbPWTextField.setEchoChar('*');
+		}
+	}
+	/*
+	 * private inner class that handles the event when 
+	 * the connect button is clicked
 	 * action listener
 	 */
-	public class ConnectButtonListener implements ActionListener
+	private class ConnectButtonListener implements ActionListener
 	{
-
+		/*
+		 * for progress bar
+		 */
+		//connectButton.setEnabled(false);
+		//task = new Task();
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			String dbURL, user, pw;
 			
+			
+			/*
+			 * Get information from panel
+			 */
 			dbURL = dbURLTextField.getText();
 			user = dbUserTextField.getText();
-			pw = new String(dbPWTextField.getPassword());
+			pw = new String(dbPWTextField.getPassword()); //stringify password
 			String strBreak = "--";
 			
+			/*
+			 * for loop for formatting output
+			 */
 			for(int i = 0; i < dbURL.length()-5; i++)
 			{
 				strBreak += "--";
 			}
 			Connection conn = null; 
+			/*
+			 * try to establish connection
+			 * catch print error
+			 */
 			try
 			{
 				conn = DriverManager.getConnection(dbURL, user, pw);
@@ -117,7 +167,7 @@ public class DatabaseInterface extends JFrame
 			}
 			catch(SQLException e1)
 			{
-				System.out.println("SQLException: " + e1.getMessage());
+				JOptionPane.showMessageDialog(null, "SQLException: " + e1.getMessage());
 			}		
 
 		}
@@ -127,10 +177,11 @@ public class DatabaseInterface extends JFrame
 	//Embedded Main in GUI class	
 	public static void main(String[] args)
 	{
+		
 		String driver = "com.mysql.cj.jdbc.Driver";
 		boolean okay = true;
 		/*
-		 * Register DB Driver
+		 * try to Register DB Driver
 		 */
 		try
 		{
@@ -138,8 +189,11 @@ public class DatabaseInterface extends JFrame
 		}
 		catch(Exception e)
 		{
+			/*
+			 * failed to load driver
+			 */
 			okay = false;
-			System.out.println("Failed to load and register driver: " + e.getMessage());
+			JOptionPane.showMessageDialog(null, "Failed to load and register driver: " + e.getMessage());
 		}
 		
 		if(okay) {
