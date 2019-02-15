@@ -7,23 +7,24 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Scanner;
 public class Main {
-
+	
+	/* Hard coded Database - can query user for info */
+	private static final String DB_CONNECTION = "jdbc:mysql://localhost:3306/mysqldb";
+	private static final String DB_USER = "root";
+	private static final String DB_PW = "password";
+	private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
+	
+	
 	public static void main(String[] args) 
 	{
-		
-		/* Hard coded Database - can query user for info */
-		String url = "jdbc:mysql://localhost:3306/mysqldb";
-		String user = "root";
-		String pw = "password";
-		String driver = "com.mysql.cj.jdbc.Driver";
-		Connection conn = null;//Establish Connection object
-		
+				
 		/* Load and Register the driver */
 		try
 		{
-			Class.forName(driver);
+			Class.forName(DB_DRIVER);
 		}
 		catch(Exception e)
 		{
@@ -52,86 +53,69 @@ public class Main {
 		 * 
 		 * SQLCOMMANDS BELOW
 		 */
-		
-		/* ********************************************************************************************************* */
-		/* ********************************************************************************************************* */
-		/* ********************************************************************************************************* */
-
-		/* insert String for INSERT INTO SQL Command - can query user for information */
-		/* the format is used for a preparedStatement statement object */
-		/* will probably take out these strings and define them within each method that they are used */
-		String insert = "INSERT INTO person(PersonID, LastName, FirstName, Email, PhoneNumber, Address, City, ZipCode) "
-		+ "VALUES(?,?,?,?,?,?,?,? )";
-		
-		/* SELECT * FROM person query's the information in the person table that is within the connected DB */
-		String selectFrom = "SELECT * FROM person";
-		
-		// UPDATE
-		
-		/* DELETE FROM * WHERE condition -- WHERE Conditions specified above */
-		
-		
-	
-		// CREATE DB
-		
-		// ALTER DB
-		
-		// CREATE TABLE
-		
-		// DROP TABLE
-		
-		// CREATE INDEX
-		
-		/* ********************************************************************************************************* */
-		/* ********************************************************************************************************* */
-		/* ********************************************************************************************************* */
-
-		/*
-		 * Connect to the MySQL database
-		 */
+		viewUserData();
+		viewAllData();
+		insertData();
+		removeData();
+		createTable();
+	}
+	/* getDBConnection returns a Connection object that represents the database */
+	private static Connection getDBConnection() 
+	{
+		Connection dbConnection = null;
 		try
 		{
-			/* Connect to Database using Connection conn object */
-			conn = DriverManager.getConnection(url, user, pw); //Connects to database
-			System.out.println("Successfully connected to " + url + " database");
-			
-			PreparedStatement st = conn.prepareStatement(insert); 
-		
-
-			/* Insert Data method */
-			//insertData(st, insert, conn);
-			
-			/* View data methods */
-			//viewAllData(st, selectFrom);
-			//viewUserData(st, selectFrom);
-			
-			/* Remove Data method */
-			removeData(st, conn);
-			
-			/* close preparedStatement connection */
-		    st.close();
-		    
-		    /* close database connection */
-		    //conn.close();
+			/* Connect to Database using Connection dbConnection object */
+			dbConnection = DriverManager.getConnection(DB_CONNECTION, DB_USER, DB_PW); //Connects to database
+			System.out.println("Successfully connected to " + DB_CONNECTION + " database");
 		}
 		catch(SQLException e)
 		{
-			System.out.println("We caught somethin boys!");
-			System.out.println("SQLException: " + e.getMessage());
+			System.out.println(e.getMessage());
 		}
-
+		return dbConnection;
 	}
 	
-	private static void viewAllData(PreparedStatement st, String query) 
+	/* CREATE TABLE JAVA MySQL METHOD */
+	private static void createTable() 
 	{
-		/* viewAllData method takes in a Prepared Statement object and a defined query */
-		/* query format: String: SELECT * FROM tablename */
-		/* Fields */
-		/* ResultSet rs = st.executeQuery(query): this creates a ResultSet object which holds the */
-		/* information found within tablename. It returns the data in a specific row starting at index 0. */
-		/* calling rs.next() returns the next row. */
+		Connection dbConnection = null;
+		PreparedStatement pSt = null;
+		
+		
+		String SQLTable = "CREATE TABLE ALIEN("
+				+ "USER_ID NUMBER(5) NOT NULL, "
+				+ "USERNAME VARCHAR(20) NOT NULL, "
+				+ "CREATED_BY VARCHAR(20) NOT NULL, "
+				+ "CREATED_DATE DATE NOT NULL, " + "PRIMARY KEY (USER_ID) "
+				+ ")";
+		try
+		{
+			dbConnection = getDBConnection();
+			pSt = dbConnection.prepareStatement(SQLTable);
+			System.out.println(SQLTable);
+			
+			/* execute and create SQL Table */
+			pSt.executeUpdate();
+			System.out.println("Table \"ALIEN\"created");
+		}
+		catch(SQLException e)
+		{
+			System.out.println(e.getMessage());
+		}
+	}
+
+	/* VIEW ALL DATA JAVA MySQL METHOD */
+	private static void viewAllData() 
+	{
+		Connection dbConnection = null;
+		Statement st = null;
+		String query = "SELECT * FROM person";
+
 		try
 		{		
+			dbConnection = getDBConnection();
+			st = dbConnection.createStatement();
 		    ResultSet rs = st.executeQuery(query);	//create ResultSet object
 		    int count = 1; 
 		      
@@ -162,15 +146,24 @@ public class Main {
 
 	      
 	}
-	private static void viewUserData(PreparedStatement st, String query)
+	
+	/* VIEW SPECIFIC USER DATA - VARIATION OF VIEW ALL DATA */
+	private static void viewUserData()
 	{
+		Connection dbConnection = null;
+		Statement st = null;
+		String query = "SELECT * FROM person";
+
 		try 
 		{
+			dbConnection = getDBConnection();
+			st = dbConnection.createStatement();
 			System.out.println("Enter the Person ID of who you want to search for: ");
 			Scanner keyboard = new Scanner(System.in);
 			int id = keyboard.nextInt();
-			ResultSet rs = st.executeQuery(query);
+			ResultSet rs = st.executeQuery(query);		//initialize pSt
 	      	int count = 0;
+	      	
 		    while (rs.next())	//view all contents pulled from query
 		    {
 		    	if(id == rs.getInt("PersonID"))	//Only pulls contents that matches the ID user inputs
@@ -198,24 +191,29 @@ public class Main {
 		}
 	}
 	
-	
-	private static void insertData(PreparedStatement st, String insert, Connection conn) 
+	/* INSERT DATA JAVA MySQL METHOD */
+	private static void insertData() 
 	{
 		/* Passed a prepared statement object, an String object holding the SQL insert statement */
 		/* and a Connection object in order to initialize the prepared statement object and append data to the DB */
+		String insert = "INSERT INTO person(PersonID, LastName, FirstName, Email, PhoneNumber, Address, City, ZipCode) "
+				+ "VALUES(?,?,?,?,?,?,?,? )";
+		Connection dbConnection = null;
+		PreparedStatement pSt = null;
 		try 
 		{
-			/* */
-			st = conn.prepareStatement(insert);
-			st.setInt(1,06);
-			st.setString(2,"Payne");
-			st.setString(3,"Kalli");
-			st.setString(4,"kalliPayne@gmail.com");
-			st.setString(5, "978855418");
-			st.setString(6,"943 Lakedale Way");
-			st.setString(7,"Sunnyvale");
-			st.setString(8,"94089");			
-			st.execute();
+			dbConnection = getDBConnection();
+			/* Prepare Statement */
+			pSt = dbConnection.prepareStatement(insert);
+			pSt.setInt(1,06);
+			pSt.setString(2,"Payne");
+			pSt.setString(3,"Kalli");
+			pSt.setString(4,"kalliPayne@gmail.com");
+			pSt.setString(5, "978855418");
+			pSt.setString(6,"943 Lakedale Way");
+			pSt.setString(7,"Sunnyvale");
+			pSt.setString(8,"94089");			
+			pSt.execute();
 		} 
 		catch (SQLException e) 
 		{
@@ -226,7 +224,8 @@ public class Main {
 		
 	}
 	
-	private static void removeData(PreparedStatement st, Connection conn)
+	/* DELETE FROM JAVA MySQL METHOD */
+	private static void removeData()
 	{
 		/*
 		  	Create a Java Connection to our MySQL database. PASSED
@@ -237,25 +236,25 @@ public class Main {
 			Close our Java MySQL database connection.
 			Catch any SQL exceptions that may come up during the process.
 		*/
-		String selectFrom = "SELECT * FROM person";
-
+		Connection dbConnection = null;
+		PreparedStatement pSt = null;
 		String deletion = "DELETE FROM person WHERE PersonID = ?";
 		Scanner keyboard = new Scanner(System.in);
 		try
 		{
+			dbConnection = getDBConnection();
 			System.out.println("Enter the PersonID of the user you'd like to delete.");
-			viewAllData(st, selectFrom);	//View database before deletion
+			viewAllData();	//View database before deletion
 			System.out.println(": ");
 			int id = keyboard.nextInt();
 			
-			/* PreparedStatement st deleting */
-			st = conn.prepareStatement(deletion);
-			st.setInt(1, id);
-			st.executeUpdate();
+			/* PreparedStatement pSt deleting */
+			pSt = dbConnection.prepareStatement(deletion);
+			pSt.setInt(1, id);
+			pSt.executeUpdate();
 			
-			viewAllData(st,selectFrom);		//View database after deletion
-			keyboard.close();
-			
+			viewAllData();		//View database after deletion
+			keyboard.close();		
 			
 		}
 		catch(SQLException e) 
