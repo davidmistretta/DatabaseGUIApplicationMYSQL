@@ -1,3 +1,4 @@
+
 package db;
 import java.sql.Connection;
 /*
@@ -12,15 +13,14 @@ import java.util.Scanner;
 public class Main {
 	
 	/* Hard coded Database - can query user for info */
-	private static final String DB_CONNECTION = "jdbc:mysql://localhost:3306/mysqldb";
+	private static final String DB_CONNECTION = "jdbc:mysql://localhost:3306/mysqldb"; //Database That is referred too
 	private static final String DB_USER = "root";
 	private static final String DB_PW = "password";
 	private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
 	
 	
 	public static void main(String[] args) 
-	{
-				
+	{		
 		/* Load and Register the driver */
 		try
 		{
@@ -30,7 +30,6 @@ public class Main {
 		{
 			System.out.println("Failed to load and register driver: " + e.getMessage());
 		}
-		
 		
 		/* Define SQL Commands to be used for database operations */
 		/* What conditions exist in SQL
@@ -53,12 +52,15 @@ public class Main {
 		 * 
 		 * SQLCOMMANDS BELOW
 		 */
+		
 		viewUserData();
 		viewAllData();
 		insertData();
 		removeData();
 		createTable();
+		removeTable();
 	}
+	
 	/* getDBConnection returns a Connection object that represents the database */
 	private static Connection getDBConnection() 
 	{
@@ -143,7 +145,7 @@ public class Main {
 		{
 			e.printStackTrace();
 		}
-
+ 
 	      
 	}
 	
@@ -262,6 +264,64 @@ public class Main {
 			e.printStackTrace();
 		}
 	}
+	
+	/* The DELETE statement is used to delete rows from a table.
+	 * If you want to remove a specific row from a table you should use WHERE condition.
+	 * DELETE FROM tablename WHERE [condition]
+	 * if you do not specify a WHERE [condition] it deletes the whole table*/
+	private static void removeTable() 
+	{
+		String rmTable = "DELETE *tablename* SET PhoneNumber = ? WHERE PersonID = ?";
+		Connection dbConnection = null;
+		Statement st = null;
+		try
+		{
+			dbConnection = getDBConnection();
+			st = dbConnection.createStatement();
+			
+			st.executeUpdate(rmTable);
+		}
+		catch(SQLException e)
+		{
+			System.out.println(e.getMessage());
+		}
+	}
+	
+	/* Amend Row */
+	private static void updateTableRow()
+	{
+		
+		String update = "UPDATE person SET "
+				+ "PersonID = ?, LastName = ?, FirstName = ?, Email = ?, "
+				+ "PhoneNumber = ?, Address = ?, City = ?, ZipCode = ?) "
+				+ "WHERE PersonID = ?";
+		Connection dbConnection = null;
+		PreparedStatement pSt = null;
+		try 
+		{
+			
+			dbConnection = getDBConnection();
+			/* Prepare Statement */
+			pSt = dbConnection.prepareStatement(update);
+			pSt.setInt(1,06);
+			pSt.setString(2,"Payne");
+			pSt.setString(3,"Kalli");
+			pSt.setString(4,"kalliPayne@gmail.com");
+			pSt.setString(5, "978855418");
+			pSt.setString(6,"943 Lakedale Way");
+			pSt.setString(7,"Sunnyvale");
+			pSt.setString(8,"94089");			
+			pSt.execute();
+		} 
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+
+		System.out.println("Successfully executed update of database using the SQL declaration: \n" + update);
+		
+	}
+
 
 
 }
